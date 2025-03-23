@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { api } from '../services/api';
+import api from '../services/api';
 
 export interface Baby {
   id: number;
@@ -76,7 +76,13 @@ export const BabyProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.post('/baby', baby);
+      const requestData = {
+        name: baby.name,
+        dateOfBirth: baby.dateOfBirth,
+        gender: parseInt(baby.gender === 'Male' ? '0' : '1') // 0 = Male, 1 = Female
+      };
+      console.log('Sending baby data:', requestData);
+      const response = await api.post('/baby', requestData);
       setBabies(prev => [...prev, response.data]);
       setCurrentBaby(response.data);
     } catch (error) {
@@ -92,7 +98,13 @@ export const BabyProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       setError(null);
-      await api.put(`/baby/${id}`, baby);
+      const requestData = {
+        name: baby.name,
+        dateOfBirth: baby.dateOfBirth,
+        gender: baby.gender ? parseInt(baby.gender === 'Male' ? '0' : '1') : undefined
+      };
+      console.log('Sending baby update data:', requestData);
+      const response = await api.put(`/baby/${id}`, requestData);
       
       // Frissítjük a lokális állapotot
       const updatedBaby = await getBaby(id);

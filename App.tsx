@@ -4,6 +4,7 @@ import { PaperProvider, MD3LightTheme } from 'react-native-paper';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { BabyProvider } from './src/contexts/BabyContext';
+import { DailyRoutineProvider } from './src/contexts/DailyRoutineContext';
 
 const theme = {
   ...MD3LightTheme,
@@ -19,9 +20,11 @@ export default function App() {
     <PaperProvider theme={theme}>
       <AuthProvider>
         <BabyProvider>
-          <NavigationContainer>
-            <AuthNavigator />
-          </NavigationContainer>
+          <DailyRoutineProvider>
+            <NavigationContainer>
+              <AuthNavigator />
+            </NavigationContainer>
+          </DailyRoutineProvider>
         </BabyProvider>
       </AuthProvider>
     </PaperProvider>

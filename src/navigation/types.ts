@@ -8,4 +8,8 @@ export type RootStackParamList = {
   Feeding: undefined;
   Growth: undefined;
   Settings: undefined;
+  AddBaby: undefined;
+  BabyDetails: { babyId: number };
+  EditBaby: { babyId: number };
+  Profile: undefined;
 }; 

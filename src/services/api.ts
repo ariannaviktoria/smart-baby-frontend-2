@@ -1,11 +1,16 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoginData, RegisterData, AuthResponse, UserProfile, UpdateProfileData } from '../types';
+import { handleApiError } from '../utils/errorHandling';
 
-// Fejlesztési környezetben használjuk a gép IP címét és a helyes portot
-const API_URL = 'http://192.168.1.3:55363/api';
+// API Konstansok
+const BASE_URL = 'http://192.168.1.5:55363/api';
+const TIMEOUT = 15000; // 15 másodperc
 
-export const api = axios.create({
-  baseURL: API_URL,
+// API kliens konfigurálása
+const api = axios.create({
+  baseURL: BASE_URL,
+  timeout: TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -25,76 +30,29 @@ api.interceptors.request.use(
   }
 );
 
-export interface LoginData {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  email: string;
-  password: string;
-  fullName: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  expiration: string;
-}
-
+// Authentikációs API szolgáltatások
 export const authApi = {
   login: async (data: LoginData): Promise<AuthResponse> => {
     try {
-      console.log('Login attempt with:', { email: data.email });
+      console.log('Bejelentkezési kísérlet:', { email: data.email });
       const response = await api.post<AuthResponse>('/auth/login', data);
-      console.log('Login response:', response.data);
+      console.log('Bejelentkezési válasz:', response.data);
       await AsyncStorage.setItem('token', response.data.token);
       return response.data;
     } catch (error: any) {
-      console.error('Login error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        statusText: error.response?.statusText
-      });
-      
-      if (error.response?.data?.message) {
-        throw new Error(`Bejelentkezési hiba: ${error.response.data.message}`);
-      }
-      if (error.code === 'ECONNABORTED') {
-        throw new Error('Időtúllépés történt. Kérjük ellenőrizze az internetkapcsolatát.');
-      }
-      if (!error.response) {
-        throw new Error(`Nem sikerült kapcsolódni a szerverhez. Kérjük ellenőrizze az internetkapcsolatát és az API URL-t ${API_URL}.`);
-      }
-      throw new Error(`Bejelentkezési hiba: ${error.message}`);
+      return handleApiError(error, 'Bejelentkezési', 'művelet');
     }
   },
 
   register: async (data: RegisterData): Promise<AuthResponse> => {
     try {
-      console.log('Register attempt with:', { email: data.email, fullName: data.fullName });
+      console.log('Regisztrációs kísérlet:', { email: data.email, fullName: data.fullName });
       const response = await api.post<AuthResponse>('/auth/register', data);
-      console.log('Register response:', response.data);
+      console.log('Regisztrációs válasz:', response.data);
       await AsyncStorage.setItem('token', response.data.token);
       return response.data;
     } catch (error: any) {
-      console.error('Register error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        statusText: error.response?.statusText
-      });
-      
-      if (error.response?.data?.message) {
-        throw new Error(`Regisztrációs hiba: ${error.response.data.message}`);
-      }
-      if (error.code === 'ECONNABORTED') {
-        throw new Error('Időtúllépés történt. Kérjük ellenőrizze az internetkapcsolatát.');
-      }
-      if (!error.response) {
-        throw new Error(`Nem sikerült kapcsolódni a szerverhez. Kérjük ellenőrizze az internetkapcsolatát és az API URL-t ${API_URL}.`);
-      }
-      throw new Error(`Regisztrációs hiba: ${error.message}`);
+      return handleApiError(error, 'Regisztrációs', 'művelet');
     }
   },
 
@@ -107,28 +65,14 @@ export const authApi = {
   },
 };
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  fullName: string;
-  profileImage?: string;
-}
-
-export interface UpdateProfileData {
-  fullName?: string;
-  email?: string;
-  currentPassword?: string;
-  newPassword?: string;
-}
-
+// Profil API szolgáltatások
 export const profileApi = {
   getProfile: async (): Promise<UserProfile> => {
     try {
       const response = await api.get<UserProfile>('/user/profile');
       return response.data;
     } catch (error: any) {
-      console.error('Get profile error:', error);
-      throw new Error(error.response?.data?.message || 'Hiba történt a profil lekérése során');
+      return handleApiError(error, 'Profil', 'lekérési');
     }
   },
 
@@ -137,8 +81,7 @@ export const profileApi = {
       const response = await api.put<UserProfile>('/user/profile', data);
       return response.data;
     } catch (error: any) {
-      console.error('Update profile error:', error);
-      throw new Error(error.response?.data?.message || 'Hiba történt a profil frissítése során');
+      return handleApiError(error, 'Profil', 'frissítési');
     }
   },
 
@@ -158,8 +101,9 @@ export const profileApi = {
       });
       return response.data;
     } catch (error: any) {
-      console.error('Upload profile image error:', error);
-      throw new Error(error.response?.data?.message || 'Hiba történt a profil kép feltöltése során');
+      return handleApiError(error, 'Profil kép', 'feltöltési');
     }
   },
-}; 
+};
+
+export default api; 
